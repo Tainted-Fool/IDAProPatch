@@ -9,8 +9,8 @@ class Program
     static void Main(string[] args)
     {
         // Declare variables
-        List<string> platforms = ["w", "l", "m"];
-        List<string> products =
+        string[] platforms = ["w", "l", "m"];
+        string[] products =
         [
             "IDA",
             "IDAHOME",
@@ -18,7 +18,7 @@ class Program
             "LUMINASRV",
             "LICENSESRV"
         ];
-        List<string> addons =
+        string[] addons =
         [
             "hexx86",
             "hexx64",
@@ -82,6 +82,7 @@ class Program
             }
             payload.licenses.Add(license);
         }
+        
         // Create the parent data
         var parentData = new ParentData
         {
@@ -127,7 +128,8 @@ class Program
         {
             Console.WriteLine($"Error: {ex.Message}");
         }
-        // File patching
+        
+        // Files to patch
         string[] filePaths =
         [
             @"C:\Program Files\IDA Professional 9.0\ida.dll",
@@ -145,7 +147,6 @@ class Program
             {
                 ModifyFile(filePaths[i], offsets[i], newBytes);
             }
-
             Console.WriteLine("File patch successfully.");
         }
         catch (FileNotFoundException)
@@ -162,6 +163,7 @@ class Program
             Console.WriteLine($"Error: {ex.Message}");
         }
 
+        // Patch file
         static void ModifyFile(string filePath, long offset, byte[] newBytes)
         {
             using FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite);
