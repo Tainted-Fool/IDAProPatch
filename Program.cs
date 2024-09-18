@@ -1,45 +1,9 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Microsoft.Win32;
-
-namespace IDAPro;
+﻿namespace IDAPro;
 
 public class Program
 {
     static void Main()
     {
-        string[] platforms =
-        [
-            "w",
-            "l",
-            "m",
-        ];
-        string[] products =
-        [
-            "IDA",
-            "IDAHOME",
-            "TEAMSSRV",
-            "LUMINASRV",
-            "LICENSESRV"
-        ];
-        string[] addons =
-        [
-            "hexx86",
-            "hexx64",
-            "hexarm",
-            "hexarm64",
-            "hexppc",
-            "hexppc64",
-            "hexmips64",
-            "hexcx86",
-            "hexcx64",
-            "hexcarm",
-            "hexcarm64",
-            "hexcppc",
-            "hexcppc64",
-            "hexcmisp64"
-        ];
-        int counter = 0;
         string[] filePaths =
         [
             @"C:\Program Files\IDA Professional 9.0\ida.dll",
@@ -50,7 +14,7 @@ public class Program
             0x32b273,
             0x342e53
         ];
-        byte[] newBytes = new byte[] { 0x90, 0x90 };
+        var newBytes = new byte[] { 0x90, 0x90 };
         const string baseSubKey = @"SOFTWARE\Hex-Rays\IDA";
         var registryValues = new Dictionary<string, object>
         {
@@ -60,60 +24,9 @@ public class Program
             { "AutoUseLumina", 0 },
             { "DisplayWelcome", 0 },
         };
-        Functions myFunctions = new Functions();
+        var myFunctions = new Functions();
+        var jsonCreator = new JsonFileCreator();
         
-        var payload = new Payload
-        {
-            licenses = new List<LicenseFormat>()
-        };
-        
-        foreach (var product in products)
-        {
-            counter++;
-            var license = new LicenseFormat
-            {
-                id = $"{counter:X2}-0000-0000-00",
-                product = product,
-                features = [],
-                add_ons = new List<AddonFormat>()
-            };
-            
-            foreach (var addon in addons)
-            {
-                var ownerLicense = $"{counter:X2}-0000-0000-00";
-                counter++;
-                var addOn = new AddonFormat
-                {
-                    id = $"{counter:X2}-0000-0000-00",
-                    code = addon.ToUpper(),
-                    owner = ownerLicense,
-                };
-                license.add_ons.Add(addOn);
-
-                foreach (var platform in platforms)
-                {
-                    var addOn2 = new AddonFormat
-                    {
-                        id = $"{counter:X2}-0000-0000-00",
-                        code = $"com.hexrays.{addon}{platform}",
-                        owner = ownerLicense,
-                    };
-                    license.add_ons.Add(addOn2);
-                }
-            }
-            payload.licenses.Add(license);
-        }
-        
-        var parentData = new ParentData
-        {
-            header = new Header { version = 1 },
-            payload = payload,
-        };
-
-        string jsonString = JsonSerializer.Serialize(parentData, MyJsonContext.Default.ParentData);
-        string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        string outputFilePath = Path.Combine(appDataPath, @"Hex-Rays\IDA Pro\ida.hexlic");
-
         if (!myFunctions.IsAdministrator())
         {
             Console.WriteLine("Need administrator privileges to patch file");
@@ -127,11 +40,15 @@ public class Program
         {
             try
             {
-                File.WriteAllText(outputFilePath, jsonString);
+                var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var outputFilePath = Path.Combine(appDataPath, @"Hex-Rays\IDA Pro\ida.hexlic");
+
+                jsonCreator.CreateJson(outputFilePath);
                 Console.WriteLine($"License file wrote: {outputFilePath}\n");
+                
                 myFunctions.CreateRegistry(baseSubKey, registryValues);
                 
-                for (int i = 0; i < filePaths.Length; i++)
+                for (var i = 0; i < filePaths.Length; i++)
                 {
                     myFunctions.PatchFile(filePaths[i], offsets[i], newBytes);
                 }
@@ -150,56 +67,4 @@ public class Program
             Console.ReadKey();
         }
     }
-}
-
-public class Header
-{
-    public int version { get; set; }
-}
-
-public class ParentData
-{
-    public Header header { get; set; }
-    public Payload payload { get; set; }
-    public string signature { get; set; } = "0x80";
-}
-
-public class Payload
-{
-    public string name { get; set; } = "what";
-
-    public string email { get; set; } = "glop";
-    public List<LicenseFormat> licenses { get; set; }
-}
-
-public class LicenseFormat
-{
-    public string id { get; set; }
-    public string license_type { get; set; } = "named";
-    public string product { get; set; }
-    public int seats { get; set; } = 6969420;
-    public string start_date { get; set; } = "2024-04-21";
-    public string end_date { get; set; } = "2030-04-21";
-    public string issued_on { get; set; } = "2024-04-21 06:24:20";
-    public string owner { get; set; } = "glopmorp";
-    public List<string> features { get; set; }
-    public List<AddonFormat> add_ons { get; set; }
-}
-
-public class AddonFormat
-{
-    public string id { get; set; }
-    public string code { get; set; }
-    public string owner { get; set; }
-    public string start_date { get; set; } = "2024-04-21";
-    public string end_date { get; set; } = "2030-04-21";
-}
-
-[JsonSerializable(typeof(Header))]
-[JsonSerializable(typeof(ParentData))]
-[JsonSerializable(typeof(Payload))]
-[JsonSerializable(typeof(LicenseFormat))]
-[JsonSerializable(typeof(AddonFormat))]
-public partial class MyJsonContext : JsonSerializerContext
-{
 }

@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using System.Security.Principal;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Win32;
 
 namespace IDAPro;
@@ -9,16 +11,16 @@ public class Functions
 {
     public bool IsAdministrator()
     {
-        WindowsIdentity identity = WindowsIdentity.GetCurrent();
-        WindowsPrincipal principal = new WindowsPrincipal(identity);
+        var identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
         return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
-    
+
     public void RelaunchAsAdmin()
     {
-        string exePath = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetEntryAssembly().GetName().Name}.exe");
+        var exePath = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetEntryAssembly().GetName().Name}.exe");
 
-        ProcessStartInfo procInfo = new ProcessStartInfo
+        var procInfo = new ProcessStartInfo
         {
             UseShellExecute = true,
             FileName = exePath,
@@ -34,19 +36,19 @@ public class Functions
             Console.WriteLine($"Error: fail to start process {ex.Message}");
         }
     }
-    
+
     public void PatchFile(string filePath, long offset, byte[] newBytes)
     {
-        using FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite);
+        using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite);
         fileStream.Seek(offset, SeekOrigin.Begin);
         Console.WriteLine($"Moved to offset: {offset:X} in {filePath}");
-    
-        byte[] originalBytes = new byte[newBytes.Length];
+
+        var originalBytes = new byte[newBytes.Length];
         fileStream.Read(originalBytes, 0, originalBytes.Length);
         Console.WriteLine($"Original bytes: {BitConverter.ToString(originalBytes)}");
-    
+
         fileStream.Seek(offset, SeekOrigin.Begin);
-    
+
         fileStream.Write(newBytes, 0, newBytes.Length);
         Console.WriteLine($"Wrote bytes: {BitConverter.ToString(newBytes)}\n");
     }
@@ -55,7 +57,7 @@ public class Functions
     {
         try
         {
-            RegistryKey writeKey = Registry.CurrentUser.CreateSubKey(baseSubKey);
+            var writeKey = Registry.CurrentUser.CreateSubKey(baseSubKey);
             if (writeKey != null)
             {
                 foreach (var (valueName, valueData) in registryValues)
