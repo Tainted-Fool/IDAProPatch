@@ -1,7 +1,4 @@
-﻿using System.Diagnostics;
-using System.Reflection;
-using System.Security.Principal;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Win32;
 
@@ -63,6 +60,7 @@ public class Program
             { "AutoUseLumina", 0 },
             { "DisplayWelcome", 0 },
         };
+        Functions myFunctions = new Functions();
         
         var payload = new Payload
         {
@@ -92,7 +90,6 @@ public class Program
                 };
                 license.add_ons.Add(addOn);
 
-                // For loop on platforms
                 foreach (var platform in platforms)
                 {
                     var addOn2 = new AddonFormat
@@ -117,13 +114,13 @@ public class Program
         string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         string outputFilePath = Path.Combine(appDataPath, @"Hex-Rays\IDA Pro\ida.hexlic");
 
-        if (!IsAdministrator())
+        if (!myFunctions.IsAdministrator())
         {
             Console.WriteLine("Need administrator privileges to patch file");
             Console.WriteLine("Relaunch as admin? y or n?");
             if (Console.ReadLine() == "y")
             {
-                RelaunchAsAdmin();
+                myFunctions.RelaunchAsAdmin();
             }
         }
         else
@@ -132,11 +129,11 @@ public class Program
             {
                 File.WriteAllText(outputFilePath, jsonString);
                 Console.WriteLine($"License file wrote: {outputFilePath}\n");
-                CreateRegistry(baseSubKey, registryValues);
+                myFunctions.CreateRegistry(baseSubKey, registryValues);
                 
                 for (int i = 0; i < filePaths.Length; i++)
                 {
-                    PatchFile(filePaths[i], offsets[i], newBytes);
+                    myFunctions.PatchFile(filePaths[i], offsets[i], newBytes);
                 }
                 Console.WriteLine("File patch successfully");
             }
@@ -151,74 +148,6 @@ public class Program
 
             Console.WriteLine("Press any key to exit");
             Console.ReadKey();
-        }
-        
-        static bool IsAdministrator()
-        {
-            WindowsIdentity identity = WindowsIdentity.GetCurrent();
-            WindowsPrincipal principal = new WindowsPrincipal(identity);
-            return principal.IsInRole(WindowsBuiltInRole.Administrator);
-        }
-    
-        static void RelaunchAsAdmin()
-        {
-            string exePath = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetEntryAssembly().GetName().Name}.exe");
-
-            ProcessStartInfo procInfo = new ProcessStartInfo
-            {
-                UseShellExecute = true,
-                FileName = exePath,
-                Verb = "runas",
-                Arguments = Environment.CommandLine
-            };
-            try
-            {
-                Process.Start(procInfo);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: fail to start process {ex.Message}");
-            }
-        }
-    
-        static void PatchFile(string filePath, long offset, byte[] newBytes)
-        {
-            using FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite);
-            fileStream.Seek(offset, SeekOrigin.Begin);
-            Console.WriteLine($"Moved to offset: {offset:X} in {filePath}");
-    
-            byte[] originalBytes = new byte[newBytes.Length];
-            fileStream.Read(originalBytes, 0, originalBytes.Length);
-            Console.WriteLine($"Original bytes: {BitConverter.ToString(originalBytes)}");
-    
-            fileStream.Seek(offset, SeekOrigin.Begin);
-    
-            fileStream.Write(newBytes, 0, newBytes.Length);
-            Console.WriteLine($"Wrote bytes: {BitConverter.ToString(newBytes)}\n");
-        }
-
-        static void CreateRegistry(string baseSubKey, Dictionary<string, object> registryValues)
-        {
-            try
-            {
-                RegistryKey writeKey = Registry.CurrentUser.CreateSubKey(baseSubKey);
-                if (writeKey != null)
-                {
-                    foreach (var (valueName, valueData) in registryValues)
-                    {
-                        if (valueData is int)
-                        {
-                            writeKey.SetValue(valueName, valueData, RegistryValueKind.DWord);
-                        }
-                    }
-                    Console.WriteLine($"Registry keys changed: {baseSubKey}\n");
-                    writeKey.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
         }
     }
 }
