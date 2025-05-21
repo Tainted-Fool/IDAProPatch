@@ -1,5 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDAPro", "IDAPro.csproj", "{FFD2E7C5-AB98-4DBF-B70C-4B6DBC178318}"
 EndProject
 Global
@@ -10,5 +13,10 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{FFD2E7C5-AB98-4DBF-B70C-4B6DBC178318}.Debug|Any CPU.ActiveCfg = Debug|Windows
 		{FFD2E7C5-AB98-4DBF-B70C-4B6DBC178318}.Debug|Any CPU.Build.0 = Debug|Windows
+		{FFD2E7C5-AB98-4DBF-B70C-4B6DBC178318}.Release|Any CPU.ActiveCfg = Release|Windows
+		{FFD2E7C5-AB98-4DBF-B70C-4B6DBC178318}.Release|Any CPU.Build.0 = Release|Windows
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

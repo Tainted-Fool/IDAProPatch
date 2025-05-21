@@ -26,7 +26,7 @@ public class Program
         };
         var myFunctions = new Functions();
         var jsonCreator = new JsonFileCreator();
-        
+
         if (!myFunctions.IsAdministrator())
         {
             Console.WriteLine("Need administrator privileges to patch file");
@@ -43,11 +43,21 @@ public class Program
                 var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 var outputFilePath = Path.Combine(appDataPath, @"Hex-Rays\IDA Pro\ida.hexlic");
 
+                var directoryPath = Path.GetDirectoryName(outputFilePath);
+                if (directoryPath != null)
+                {
+                    Directory.CreateDirectory(directoryPath);
+                }
+                else
+                {
+                    throw new InvalidOperationException("The directory path could not be determined.");
+                }
+
                 jsonCreator.CreateJson(outputFilePath);
                 Console.WriteLine($"License file wrote: {outputFilePath}\n");
-                
+
                 myFunctions.CreateRegistry(baseSubKey, registryValues);
-                
+
                 for (var i = 0; i < filePaths.Length; i++)
                 {
                     myFunctions.PatchFile(filePaths[i], offsets[i], newBytes);

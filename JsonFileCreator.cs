@@ -39,7 +39,7 @@ public class JsonFileCreator
             "hexcmisp64"
         ];
         var counter = 0;
-        
+
         var payload = new Payload
         {
             licenses = []
@@ -84,6 +84,7 @@ public class JsonFileCreator
 
         var parentData = new ParentData
         {
+            header = new Header(),
             payload = payload
         };
 
